@@ -80,6 +80,24 @@ require_command gum
 require_command jq
 require_command cardano-cli
 
+truncate_center() {
+  local value="$1"
+  local max_length="$2"
+
+  if [ "${#value}" -le "$max_length" ]; then
+    printf '%s' "$value"
+    return
+  fi
+
+  local visible_length=$((max_length - 3))
+  local prefix_length=$(((visible_length + 1) / 2))
+  local suffix_length=$((visible_length / 2))
+
+  printf '%s...%s' \
+    "${value:0:prefix_length}" \
+    "${value: -suffix_length}"
+}
+
 for required_file in "$COLD_VKEY" "$COLD_SKEY" "$PAYMENT_SKEY"; do
   if [ ! -f "$required_file" ]; then
     echo "Error: Required file not found: $required_file"
@@ -153,10 +171,23 @@ cardano-cli conway query utxo \
   "$NETWORK_FLAG" \
   --out-file "$TMP_DIR/utxos.json"
 
-utxo_list=$(jq -r '
-  to_entries[] |
-  ((.value.value.lovelace / 1000000) | tostring) + " ADA | " + .key
-' "$TMP_DIR/utxos.json")
+utxo_list=$(
+  max_ada_width=0
+  formatted_rows=()
+
+  while IFS=$'\t' read -r lovelace utxo; do
+    ada=$(awk -v lovelace="$lovelace" 'BEGIN { printf "%.2f", lovelace / 1000000 }')
+    if [ "${#ada}" -gt "$max_ada_width" ]; then
+      max_ada_width=${#ada}
+    fi
+    formatted_rows+=("$ada"$'\t'"$utxo")
+  done < <(jq -r 'to_entries[] | [.value.value.lovelace, .key] | @tsv' "$TMP_DIR/utxos.json")
+
+  for row in "${formatted_rows[@]}"; do
+    IFS=$'\t' read -r ada utxo <<< "$row"
+    printf "%*s ADA | %s\n" "$max_ada_width" "$ada" "$utxo"
+  done
+)
 
 if [ -z "$utxo_list" ]; then
   gum style --foreground 1 "No UTXOs found."
@@ -197,12 +228,16 @@ cardano-cli conway transaction sign \
 # Confirm + Submit
 ############################################
 
+review_payment_addr=$(truncate_center "$payment_addr" 66)
+
 gum style --bold "Review Vote Details"
 echo
-echo "TxRef:         $gov_action_tx_ref"
-echo "Vote:          $vote_choice"
-echo "Payment Addr:  $payment_addr"
-echo "UTXO:          $tx_in"
+printf '%s\n' "---------------------------------------------------------------------------------"
+printf '%-14s %s\n' "TxRef:" "$gov_action_tx_ref"
+printf '%-14s %s\n' "Vote:" "$vote_choice"
+printf '%-14s %s\n' "Payment Addr:" "$review_payment_addr"
+printf '%-14s %s\n' "UTXO:" "$tx_in"
+printf '%s\n' "---------------------------------------------------------------------------------"
 echo
 
 if gum confirm "Submit vote to $NETWORK?"; then

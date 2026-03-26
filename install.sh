@@ -92,7 +92,9 @@ remote_install() {
   workdir="$(mktemp -d)"
   trap "rm -rf '$workdir'" EXIT
 
+  echo
   echo "Downloading spo_vote files from ${REPO_OWNER}/${REPO_NAME}@${REPO_REF}..."
+  echo
   download_file "${RAW_BASE}/spo_vote.sh" "${workdir}/spo_vote.sh"
   download_file "${RAW_BASE}/spo_vote.conf.example" "${workdir}/spo_vote.conf.example"
   install_from_dir "$workdir"
