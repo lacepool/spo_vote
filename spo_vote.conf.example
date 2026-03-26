@@ -1,0 +1,27 @@
+# Copy to one of:
+# - /etc/spo_vote.conf
+# - the same directory as spo_vote.sh
+# Or set SPO_VOTE_CONFIG to point at your chosen path.
+
+# Cardano network name. Supported values: mainnet, preprod, preview.
+NETWORK="mainnet"
+
+# Base directory for persistent files created by the script.
+WORKDIR="/var/lib/spo-vote"
+
+# Directory for temporary files such as queried UTXO JSON and vote files.
+TMP_DIR="/tmp/spo-vote"
+
+# Optional payment address. If set, the script will not prompt for it.
+# PAYMENT_ADDRESS="addr1..."
+
+# Optional override if your keys live outside WORKDIR.
+# KEYS_DIR="/etc/spo-vote/keys"
+
+# Optional override if you want signed/raw transactions outside WORKDIR/tx.
+# TX_DIR="/var/lib/spo-vote/tx"
+
+# Optional explicit key file paths.
+# COLD_VKEY="$KEYS_DIR/lace.node.vkey"
+# COLD_SKEY="$KEYS_DIR/lace.node.skey"
+# PAYMENT_SKEY="$KEYS_DIR/payment.skey"

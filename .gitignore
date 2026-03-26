@@ -1,0 +1,14 @@
+# Secrets
+keys/
+spo_vote.conf
+
+# Generated transaction artifacts
+tx/
+
+# Local temp/runtime files
+*.raw
+*.signed
+utxos.json
+
+# macOS / editor noise
+.DS_Store
